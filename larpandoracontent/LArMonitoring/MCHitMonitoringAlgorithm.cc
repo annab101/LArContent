@@ -1,5 +1,5 @@
 /**
- *  @file   larpandoracontent/LArMonitoring/MCMonitoringAlgorithm.cc
+ *  @file   larpandoracontent/LArMonitoring/MCHitMonitoringAlgorithm.cc
  *
  *  @brief  Implementation of the particle visualisation algorithm.
  *
@@ -8,7 +8,7 @@
 
 #include "Pandora/AlgorithmHeaders.h"
 
-#include "larpandoracontent/LArMonitoring/MCMonitoringAlgorithm.h"
+#include "larpandoracontent/LArMonitoring/MCHitMonitoringAlgorithm.h"
 #include "larpandoracontent/LArHelpers/LArGeometryHelper.h"
 #include "larpandoracontent/LArHelpers/LArInteractionTypeHelper.h"
 #include "larpandoracontent/LArHelpers/LArMCParticleHelper.h"
@@ -24,7 +24,7 @@ using namespace pandora;
 namespace lar_content
 {
 
-MCMonitoringAlgorithm::MCMonitoringAlgorithm() :
+MCHitMonitoringAlgorithm::MCHitMonitoringAlgorithm() :
     m_caloHitListName(""),
     m_mcListName("Input"),
     m_visualise(true)
@@ -33,13 +33,13 @@ MCMonitoringAlgorithm::MCMonitoringAlgorithm() :
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-MCMonitoringAlgorithm::~MCMonitoringAlgorithm()
+MCHitMonitoringAlgorithm::~MCHitMonitoringAlgorithm()
 {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode MCMonitoringAlgorithm::Run()
+StatusCode MCHitMonitoringAlgorithm::Run()
 {
 
     this->BuildMCHitMap();
@@ -49,7 +49,7 @@ StatusCode MCMonitoringAlgorithm::Run()
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode MCMonitoringAlgorithm::BuildMCHitMap()
+StatusCode MCHitMonitoringAlgorithm::BuildMCHitMap()
 {
     if (m_visualise)
     {
@@ -85,23 +85,25 @@ StatusCode MCMonitoringAlgorithm::BuildMCHitMap()
         }
     }
 
-    MCHitsMap nucFragHitMap, otherHitsMap;
-    std::vector<int> nucFragPDGs = {1000010020, 1000010030, 1000020030, 1000020040};
+    MCHitsMap hitAboveThresholdMap, otherHitsMap;
     for (const auto &[pMC, hits] : m_mcHitsMap)
     {
-        bool found_nucFrag{false};
-        if (std::find(nucFragPDGs.begin(), nucFragPDGs.end(), pMC->GetParticleId()) != nucFragPDGs.end())
+        for (const CaloHit *const pCaloHit : hits)
         {
-            found_nucFrag = true;
-            nucFragHitMap[pMC] = hits;
-        }        
-        if (!found_nucFrag)
-        {
-            otherHitsMap[pMC] = hits;
+            bool above_threshold{false};
+            if (pCaloHit->GetInputEnergy() > 1000.)
+            {
+                above_threshold = true;
+                hitAboveThresholdMap[pMC].emplace_back(pCaloHit);
+            }        
+            if (!above_threshold)
+            {
+                otherHitsMap[pMC].emplace_back(pCaloHit);
+            }
         }
     }
 
-    for (const auto &[pMC, hits] : nucFragHitMap)
+    for (const auto &[pMC, hits] : hitAboveThresholdMap)
     {
         if (hits.empty())
             continue;
@@ -113,19 +115,25 @@ StatusCode MCMonitoringAlgorithm::BuildMCHitMap()
             PANDORA_MONITORING_API(VisualizeCaloHits(this->GetPandora(), &hits, oss.str(), AUTOITER));
         }
 
-        std::cout << "Found visible nuclear fragment with " << hits.size() << " hits and momentum "
-                  << pMC->GetMomentum().GetMagnitude() << " GeV, direction " << pMC->GetMomentum().GetUnitVector().GetZ() << " "
-                  << pMC->GetMomentum().GetUnitVector().GetY() << " " << pMC->GetMomentum().GetZ() << std::endl;
+        MCParticleWeightMap mcParticleWeightMap;
 
-        const MCParticleList &parentList{pMC->GetParentList()};
+        for (const CaloHit *const pCaloHit : hits)
+        {
+            const MCParticleWeightMap &hitMCParticleWeightMap(pCaloHit->GetMCParticleWeightMap());
 
-        if (parentList.size() == 1)
-        {
-            std::cout << "Parent: " << parentList.front()->GetParticleId() << std::endl;
-        }
-        else
-        {
-            std::cout << "more than one parent" << std::endl;
+            MCParticleVector mcParticleVector;
+            for (const MCParticleWeightMap::value_type &mapEntry : hitMCParticleWeightMap) mcParticleVector.push_back(mapEntry.first);
+            std::sort(mcParticleVector.begin(), mcParticleVector.end(), PointerLessThan<MCParticle>());
+
+            std::cout << "Found hit belonging to " << pMC->GetParticleId() << " with input energy "
+                    << pCaloHit->GetInputEnergy() << std::endl;
+            for (const MCParticle *const pMCParticle : mcParticleVector)
+            {
+                const float weight(hitMCParticleWeightMap.at(pMCParticle));
+                mcParticleWeightMap[pMCParticle] += weight;
+                std::cout << "MC particle: " << pMCParticle->GetParticleId() << ", weight: " << weight << std::endl;
+            }
+
         }
     }
     for (const auto &[pMC, hits] : otherHitsMap)
@@ -178,7 +186,7 @@ StatusCode MCMonitoringAlgorithm::BuildMCHitMap()
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode MCMonitoringAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
+StatusCode MCHitMonitoringAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 {
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "CaloHitListName", m_caloHitListName));
     PANDORA_RETURN_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=, XmlHelper::ReadValue(xmlHandle, "Visualise", m_visualise));

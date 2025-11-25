@@ -54,6 +54,7 @@
 #include "larpandoracontent/LArMonitoring/EventClusterValidationAlgorithm.h"
 #include "larpandoracontent/LArMonitoring/HierarchyMonitoringAlgorithm.h"
 #include "larpandoracontent/LArMonitoring/HierarchyValidationAlgorithm.h"
+#include "larpandoracontent/LArMonitoring/MCHitMonitoringAlgorithm.h"
 #include "larpandoracontent/LArMonitoring/MCMonitoringAlgorithm.h"
 #include "larpandoracontent/LArMonitoring/MCParticleMonitoringAlgorithm.h"
 #include "larpandoracontent/LArMonitoring/MuonLeadingEventValidationAlgorithm.h"
@@ -244,6 +245,7 @@
     d("LArHierarchyMonitoring",                 HierarchyMonitoringAlgorithm)                                                   \
     d("LArHierarchyValidation",                 HierarchyValidationAlgorithm)                                                   \
     d("LArPfoValidation",                       PfoValidationAlgorithm)                                                         \
+    d("LArMCHitMonitoring",                     MCHitMonitoringAlgorithm)                                                       \
     d("LArMCMonitoring",                        MCMonitoringAlgorithm)                                                          \
     d("LArMCParticleMonitoring",                MCParticleMonitoringAlgorithm)                                                  \
     d("LArVertexMonitoring",                    VertexMonitoringAlgorithm)                                                      \

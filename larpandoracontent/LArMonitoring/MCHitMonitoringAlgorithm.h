@@ -1,12 +1,12 @@
 /**
- *  @file   larpandoracontent/LArMonitoring/MCMonitoringAlgorithm.h
+ *  @file   larpandoracontent/LArMonitoring/MCHitMonitoringAlgorithm.h
  *
  *  @brief  Header file for the particle visualisation algorithm.
  *
  *  $Log: $
  */
-#ifndef LAR_MC_MONITORING_ALGORITHM_H
-#define LAR_MC_MONITORING_ALGORITHM_H 1
+#ifndef LAR_MC_HIT_MONITORING_ALGORITHM_H
+#define LAR_MC_HIT_MONITORING_ALGORITHM_H 1
 
 #include "Pandora/Algorithm.h"
 
@@ -14,17 +14,17 @@ namespace lar_content
 {
 
 /**
- *  @brief  MCMonitoringAlgorithm class
+ *  @brief  MCHitMonitoringAlgorithm class
  */
-class MCMonitoringAlgorithm : public pandora::Algorithm
+class MCHitMonitoringAlgorithm : public pandora::Algorithm
 {
 public:
     /**
    *  @brief  Default constructor
    */
-    MCMonitoringAlgorithm();
+    MCHitMonitoringAlgorithm();
 
-    virtual ~MCMonitoringAlgorithm();
+    virtual ~MCHitMonitoringAlgorithm();
 
 private:
     typedef std::unordered_map<const pandora::MCParticle *, pandora::CaloHitList> MCHitsMap;
@@ -42,4 +42,4 @@ private:
 
 } // namespace lar_content
 
-#endif // LAR_MC_MONITORING_ALGORITHM_H
+#endif // LAR_MC_HIT_MONITORING_ALGORITHM_H
