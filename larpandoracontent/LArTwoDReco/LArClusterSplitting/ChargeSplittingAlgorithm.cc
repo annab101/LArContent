@@ -29,6 +29,8 @@ StatusCode ChargeSplittingAlgorithm::FindBestSplitPosition(const TwoDSlidingFitR
     CartesianVector splitClusterPosition(0.f, 0.f, 0.f);
     float distToCluster = 9999.;
 
+    std::cout << "=================================================" << std::endl;
+
     std::cout << "Looking for charge split!" << std::endl;
 
     const Cluster *const pCluster(slidingFitResult.GetCluster());
@@ -37,22 +39,28 @@ StatusCode ChargeSplittingAlgorithm::FindBestSplitPosition(const TwoDSlidingFitR
     std::cout << orderedCaloHitList.size() << std::endl;
 
     float prevHitEnergy = -1;
+    float bestHitDif = 0.;
 
     for (const OrderedCaloHitList::value_type &layerEntry : pCluster->GetOrderedCaloHitList())
     {   
-        if(foundClusterSplit == true){
-            continue;
-        }
+        //if(foundClusterSplit == true){
+        //    continue;
+        //}
 
         for (const CaloHit *const pCaloHit : *layerEntry.second)
         {
-            if(foundClusterSplit == true){
-                continue;
-            }
+            //if(foundClusterSplit == true){
+            //    continue;
+            //}
            float hitEnergy = pCaloHit->GetInputEnergy();
+           float hitDif = std::abs(hitEnergy - prevHitEnergy);
 
-           if(prevHitEnergy > 0 && std::abs(hitEnergy - prevHitEnergy) > 1000){
+           std::cout << "hit energy " << hitEnergy << std::endl;
+           std::cout << "hit diff " << hitDif << std::endl;
+
+           if(prevHitEnergy > 0 && hitDif > 1000 && hitDif > bestHitDif){
                 foundClusterSplit = true;
+                bestHitDif = hitDif;
                 std::cout << "split cluster!!" << std::endl;
                 std::cout << "prev energy: " << prevHitEnergy << std::endl;
                 std::cout << "current energy: " << hitEnergy << std::endl;
@@ -92,12 +100,12 @@ StatusCode ChargeSplittingAlgorithm::FindBestSplitPosition(const TwoDSlidingFitR
             //std::cout << "dist squared: " << distanceSquared << std::endl;
             //std::cout << centralPosition.GetX() << " " << centralPosition.GetY() << " " << centralPosition.GetZ() << std::endl;
 
-                if (distanceSquared < distToCluster)
-                {
-                    distToCluster = distanceSquared;
-                    splitPosition = centralPosition;
-                    foundSplit = true;
-                }
+            if (distanceSquared < distToCluster)
+            {
+                distToCluster = distanceSquared;
+                splitPosition = centralPosition;
+                foundSplit = true;
+            }
 
         }
 
